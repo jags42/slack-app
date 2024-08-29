@@ -1,0 +1,74 @@
+.sidenav {
+  height: 100%;
+  width: 252px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #232323;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+
+.sidenav-logo {
+  width: 100%;
+}
+
+.sidenav-account {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+.sidenav a {
+  padding: 8px 0;
+  text-decoration: none;
+  font-size: 16px;
+  color: white;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sidenav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidenav ul li {
+  margin: 10px 0;
+}
+
+.sidenav ul .dropdown li {
+  margin: 5px 0;
+}
+
+@media (max-width: 768px) {
+  /* Your styles go here */
+  .sidenav, .sidenav-container {
+    display: none;
+  }
+
+  .transaction-page-content {
+    width: 100% !important;
+  }
+}
+
+.main-content {
+  width: calc(100% - 284px);
+  padding: 32px;
+}
+
+.home-container {
+  display: flex;
+  height: 100vh;
+} 
+
+.sidenav-container {
+  width: 284px;
+}
