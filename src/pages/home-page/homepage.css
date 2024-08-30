@@ -72,3 +72,18 @@
 .sidenav-container {
   width: 284px;
 }
+
+.logout-button {
+  position: absolute;
+  bottom: 20px; /* Adjust this value as needed */
+  width: 89%;
+  text-align: center; /* Center the button horizontally */
+}
+
+.primary-btn.logout {
+  width: 100%;
+}
+
+/*********************************** CODE ONLY BELOW THIS PART *******************************************/
+
+

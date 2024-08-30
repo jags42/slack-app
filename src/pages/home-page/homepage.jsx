@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "../../constants/constants";
 import UserService from "../../services/UserService";
 import logo from '../../assets/avionchat.png';
 import "./homepage.css";
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Import Font Awesome
+import axios from 'axios';
 
 function Homepage(props) {
   const { setIsLoggedIn, user } = props;
   const [userList, setUserList] = useState([]);
   const [showChannels, setShowChannels] = useState(false);
   const [showDirectMessages, setShowDirectMessages] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null); // State for selected user
+  const [messages, setMessages] = useState([]); // State for messages
+  const [newMessage, setNewMessage] = useState(""); // State for new message
 
   useEffect(() => {
     async function fetchUsers() {
@@ -19,6 +24,66 @@ function Homepage(props) {
       fetchUsers();
     }
   }, [userList.length, user]);
+
+  // Define fetchMessages inside the Homepage component
+  async function fetchMessages() {
+    if (selectedUser) {
+      try {
+        const headers = {
+          "access-token": user.accessToken,
+          expiry: user.expiry,
+          client: user.client,
+          uid: user.uid,
+        };
+
+        const response = await axios.get(`${API_URL}/messages?receiver_id=${selectedUser.id}&receiver_class=User`, { headers });
+        if (response.status === 200) {
+          console.log('Fetched messages:', response.data); // Debugging line
+          setMessages(response.data.data); // Ensure you're setting the correct data
+        } else {
+          console.error('Failed to fetch messages');
+        }
+      } catch (error) {
+        console.error('Failed to fetch messages', error);
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchMessages(); // Call fetchMessages when selectedUser changes
+  }, [selectedUser, user]);
+
+  function handleUserSelect(user) {
+    setSelectedUser(user);
+  }
+
+  async function sendMessage() {
+    if (selectedUser && newMessage.trim()) {
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+          "access-token": user.accessToken,
+          expiry: user.expiry,
+          client: user.client,
+          uid: user.uid,
+        };
+
+        const response = await axios.post(`${API_URL}/messages`, {
+          receiver_id: selectedUser.id,
+          receiver_class: "User",
+          body: newMessage // Ensure this matches your API's expected field name
+        }, { headers });
+
+        if (response.status === 200) {
+          // Optionally, refetch the messages to ensure the list is updated
+          fetchMessages(); // Call the fetchMessages function again to refresh the message list
+          setNewMessage(""); // Clear the input field after sending
+        }
+      } catch (error) {
+        console.error('Failed to send message', error);
+      }
+    }
+  }
 
   function logout() {
     localStorage.clear();
@@ -63,7 +128,11 @@ function Homepage(props) {
                   <ul className="dropdown">
                     {userList.length > 0 ? (
                       userList.map((student) => (
-                        <li key={student.id}><a href={`/dm/${student.id}`}>{student.email}</a></li>
+                        <li key={student.id}>
+                          <a href="#" onClick={() => handleUserSelect(student)}>
+                            {student.email}
+                          </a>
+                        </li>
                       ))
                     ) : (
                       <li>No Direct Messages Available</li>
@@ -73,12 +142,40 @@ function Homepage(props) {
               </li>
             </ul>
           </div>
-          <button onClick={logout}>Logout</button>
+          <div className="logout-button">
+            <button className="primary-btn logout" onClick={logout}>Logout</button>
+          </div>
         </div>
       </div>
 
       <div className="main-content">
         <h1>This is my dashboard</h1>
+
+        {selectedUser && (
+          <div className="messages-section">
+            <h2>Chat with {selectedUser.email}</h2>
+            <div className="messages-list">
+              {messages.length > 0 ? (
+                messages.map((msg, index) => (
+                  <div key={index} className="message-item">
+                    {msg.body} {/* Ensure this matches the field name in your API response */}
+                  </div>
+                ))
+              ) : (
+                <p>No messages to display</p>
+              )}
+            </div>
+            <div className="message-input">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
+              />
+              <button onClick={sendMessage}>Send</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
