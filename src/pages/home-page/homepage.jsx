@@ -16,12 +16,12 @@ function Homepage(props) {
   const [messages, setMessages] = useState([]); // State for messages
   const [newMessage, setNewMessage] = useState(""); // State for new message
 
-    // Define states for Create Channel and Add Users to Channel
-    const [showCreateChannel, setShowCreateChannel] = useState(false);
-    const [channelName, setChannelName] = useState('');
-    const [showAddUsers, setShowAddUsers] = useState(false);
-    const [selectedChannel, setSelectedChannel] = useState(null);
-    const [usersToAdd, setUsersToAdd] = useState([]);
+  // Define states for Create Channel and Add Users to Channel
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [channelName, setChannelName] = useState('');
+  const [showAddUsers, setShowAddUsers] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState(null);
+  const [usersToAdd, setUsersToAdd] = useState([]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -32,6 +32,8 @@ function Homepage(props) {
       fetchUsers();
     }
   }, [userList.length, user]);
+
+  
 
   useEffect(() => {
     async function fetchChannels() {
@@ -53,7 +55,23 @@ function Homepage(props) {
     fetchChannels();
   }, [user]);
 
-  // Define fetchMessages inside the Homepage component
+  useEffect(() => {
+    if (selectedUser) {
+      fetchMessages(); // Initial fetch of messages for the selected user
+
+      const intervalId = setInterval(() => {
+        fetchMessages(); // Fetch messages every 1 second
+      }, 1000);
+
+      // Clean up the interval when the component unmounts or `selectedUser` changes
+      return () => clearInterval(intervalId);
+    }
+  }, [selectedUser]);
+
+  function handleUserSelect(user) {
+    setSelectedUser(user);
+  }
+
   async function fetchMessages() {
     if (selectedUser) {
       try {
@@ -66,7 +84,6 @@ function Homepage(props) {
 
         const response = await axios.get(`${API_URL}/messages?receiver_id=${selectedUser.id}&receiver_class=User`, { headers });
         if (response.status === 200) {
-          console.log('Fetched messages:', response.data); // Debugging line
           setMessages(response.data.data); // Ensure you're setting the correct data
         } else {
           console.error('Failed to fetch messages');
@@ -75,15 +92,6 @@ function Homepage(props) {
         console.error('Failed to fetch messages', error);
       }
     }
-  }
-
-  useEffect(() => {
-    fetchMessages(); // Call fetchMessages when selectedUser changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser, user]);
-
-  function handleUserSelect(user) {
-    setSelectedUser(user);
   }
 
   async function sendMessage() {
@@ -104,8 +112,7 @@ function Homepage(props) {
         }, { headers });
 
         if (response.status === 200) {
-          // Optionally, refetch the messages to ensure the list is updated
-          fetchMessages(); // Call the fetchMessages function again to refresh the message list
+          fetchMessages(); // Optionally, refetch the messages to ensure the list is updated
           setNewMessage(""); // Clear the input field after sending
         }
       } catch (error) {
@@ -133,7 +140,7 @@ function Homepage(props) {
 
       const response = await axios.post(`${API_URL}/channels`, {
         name: channelName
-      }, {headers}); 
+      }, { headers }); 
 
       if (response.status === 200) {
         console.log('Channel created successfully:', response.data); 
@@ -199,21 +206,24 @@ function Homepage(props) {
                 )}
               </li>
               <li>
-                <a
-                  href="#"
-                  onClick={() => setShowDirectMessages(!showDirectMessages)}
+                <div className="sidenav-dropdown" onClick={() => setShowDirectMessages(!showDirectMessages)}
                 >
                   Direct Messages{" "}
                   <i className={`fas fa-caret-${showDirectMessages ? "up" : "down"}`}></i>
-                </a>
+                </div>
                 {showDirectMessages && (
-                  <ul className="dropdown">
+                  <ul className="dropdown-users">
                     {userList.length > 0 ? (
                       userList.map((student) => (
                         <li key={student.id}>
-                          <a href="#" onClick={() => handleUserSelect(student)}>
+                          <div
+                            className={`dropdown-users-results ${
+                              selectedUser?.id === student.id ? 'selected' : ''
+                            }`}
+                            onClick={() => handleUserSelect(student)}
+                          >
                             {student.email}
-                          </a>
+                          </div>
                         </li>
                       ))
                     ) : (
