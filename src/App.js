@@ -13,7 +13,8 @@ function App() {
   const [user, setUser] = useState(()=> 
     JSON.parse(localStorage.getItem("user"))
 );
-const [errorMessage, setErrorMessage] = useState("");
+// const [errorMessage, setErrorMessage] = useState("");
+const [errorMessage] = useState("");
 
   useEffect(()=>{
     if(user){

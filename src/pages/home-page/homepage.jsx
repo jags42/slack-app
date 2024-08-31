@@ -9,11 +9,19 @@ import axios from 'axios';
 function Homepage(props) {
   const { setIsLoggedIn, user } = props;
   const [userList, setUserList] = useState([]);
+  const [channels, setChannels] = useState([]); // Add state for channels
   const [showChannels, setShowChannels] = useState(false);
   const [showDirectMessages, setShowDirectMessages] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null); // State for selected user
   const [messages, setMessages] = useState([]); // State for messages
   const [newMessage, setNewMessage] = useState(""); // State for new message
+
+    // Define states for Create Channel and Add Users to Channel
+    const [showCreateChannel, setShowCreateChannel] = useState(false);
+    const [channelName, setChannelName] = useState('');
+    const [showAddUsers, setShowAddUsers] = useState(false);
+    const [selectedChannel, setSelectedChannel] = useState(null);
+    const [usersToAdd, setUsersToAdd] = useState([]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -24,6 +32,26 @@ function Homepage(props) {
       fetchUsers();
     }
   }, [userList.length, user]);
+
+  useEffect(() => {
+    async function fetchChannels() {
+      try {
+        const headers = {
+          "access-token": user.accessToken,
+          expiry: user.expiry,
+          client: user.client,
+          uid: user.uid,
+        };
+        const response = await axios.get(`${API_URL}/channels`, { headers });
+        if (response.status === 200) {
+          setChannels(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch channels', error);
+      }
+    }
+    fetchChannels();
+  }, [user]);
 
   // Define fetchMessages inside the Homepage component
   async function fetchMessages() {
@@ -51,6 +79,7 @@ function Homepage(props) {
 
   useEffect(() => {
     fetchMessages(); // Call fetchMessages when selectedUser changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUser, user]);
 
   function handleUserSelect(user) {
@@ -90,6 +119,53 @@ function Homepage(props) {
     setIsLoggedIn(false);
   }
 
+  async function handleCreateChannel(e) {
+    e.preventDefault(); 
+  
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "access-token": user.accessToken, 
+        expiry: user.expiry,
+        client: user.client,
+        uid: user.uid
+      }; 
+
+      const response = await axios.post(`${API_URL}/channels`, {
+        name: channelName
+      }, {headers}); 
+
+      if (response.status === 200) {
+        console.log('Channel created successfully:', response.data); 
+        setShowCreateChannel(false);
+        setChannelName(''); // Clear the input after channel creation
+      }
+    } catch (error) {
+      console.error('Failed to create channel', error); 
+    }
+  }
+
+  async function handleAddUsersToChannel() {
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "access-token": user.accessToken,
+        expiry: user.expiry,
+        client: user.client,
+        uid: user.uid,
+      };
+      const response = await axios.post(`${API_URL}/channels/${selectedChannel}/users`, { user_ids: usersToAdd }, { headers });
+      if (response.status === 200) {
+        console.log('Users added successfully:', response.data);
+        setShowAddUsers(false);
+        // Optionally refresh user lists or channel details
+      }
+    } catch (error) {
+      console.error('Failed to add users to channel', error);
+    }
+  }
+
+
   return (
     <div className="home-container">
       <div className="sidenav-container">
@@ -99,7 +175,7 @@ function Homepage(props) {
               <img src={logo} alt="Avion Bank Logo" />
             </div>
             <ul>
-              <li>
+            <li>
                 <a
                   href="#"
                   onClick={() => setShowChannels(!showChannels)}
@@ -109,10 +185,16 @@ function Homepage(props) {
                 </a>
                 {showChannels && (
                   <ul className="dropdown">
-                    <li><a href="/channel/1">Channel 1</a></li>
-                    <li><a href="/channel/2">Channel 2</a></li>
-                    <li><a href="/channel/3">Channel 3</a></li>
-                    {/* Add more channels as needed */}
+                    {channels.map((channel) => (
+                      <li key={channel.id}>
+                        <a href={`/channel/${channel.id}`}>{channel.name}</a>
+                      </li>
+                    ))}
+                    <li><a href='#' onClick={() => setShowCreateChannel(true)}>Create New Channel</a></li>
+                    {/* Optionally, add a link to manage users */}
+                    {channels.length > 0 && (
+                      <li><a href='#' onClick={() => setShowAddUsers(true)}>Add Users to Channel</a></li>
+                    )}
                   </ul>
                 )}
               </li>
@@ -149,8 +231,6 @@ function Homepage(props) {
       </div>
 
       <div className="main-content">
-        <h1>This is my dashboard</h1>
-
         {selectedUser && (
           <div className="messages-section">
             <h2>Chat with {selectedUser.email}</h2>
@@ -176,6 +256,40 @@ function Homepage(props) {
             </div>
           </div>
         )}
+
+         {/* Conditionally Render Create Channel Form */}
+         {showCreateChannel && (
+          <div className="create-channel-form">
+            <h2>Create a New Channel</h2>
+            <form onSubmit={handleCreateChannel}>
+              <input
+                type="text"
+                value={channelName}
+                onChange={(e) => setChannelName(e.target.value)}
+                placeholder="Enter channel name"
+                required
+              />
+              <button type="submit">Create Channel</button>
+              <button onClick={() => setShowCreateChannel(false)}>Cancel</button>
+            </form>
+          </div>
+        )}
+
+         {/* Conditionally Render Add Users to Channel Form */}
+         {showAddUsers && (
+    <div className="add-users-form">
+      <h2>Add Users to Channel</h2>
+      <form onSubmit={(e) => { e.preventDefault(); handleAddUsersToChannel(); }}>
+        <select multiple value={usersToAdd} onChange={(e) => setUsersToAdd(Array.from(e.target.selectedOptions, option => option.value))}>
+          {userList.map(user => (
+            <option key={user.id} value={user.id}>{user.email}</option>
+          ))}
+        </select>
+        <button type="submit">Add Users</button>
+        <button onClick={() => setShowAddUsers(false)}>Cancel</button>
+      </form>
+    </div>
+  )}
       </div>
     </div>
   );
