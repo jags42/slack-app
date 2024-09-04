@@ -319,38 +319,46 @@ function Homepage(props) {
               <img src={logo} alt="Avion Bank Logo" />
             </div>
             <ul>
-              <li>
-                <div
-                  className="sidenav-dropdown"
-                  onClick={() => setShowChannels(!showChannels)}
-                >
-                  Channels{" "}
-                  <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
-                </div>
-                {showChannels && (
-                  <ul className="dropdown-users">
-                    {channels.map((channel) => (
-                      <li key={channel.id}>
-                        <a
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleChannelSelect(channel)}
-                        >
-                          {channel.name}
-                        </a>
-                      </li>
-                    ))}
-                    <li><button>
-                      <a onClick={() => {
-                        setShowCreateChannel(true);
-                        setSelectedChannel(false);
-                      }}>
-                        Create New Channel
-                      </a>
-                      </button>
-                    </li>
-                  </ul>
-                )}
-              </li>
+            <li>
+  <div
+    className="sidenav-dropdown"
+    onClick={() => setShowChannels(!showChannels)}
+  >
+    Channels{" "}
+    <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
+  </div>
+
+  {showChannels && (
+    <>
+    <div className="create-channel-button">
+        <button className="channel-button"
+          onClick={() => {
+            setShowCreateChannel(true);
+            setSelectedChannel(false);
+          }}
+        >
+          Create New Channel
+        </button>
+      </div>
+
+      <ul className="dropdown-channels">
+        {channels.map((channel) => (
+          <li key={channel.id}>
+            <a
+              style={{ cursor: "pointer" }}
+              onClick={() => handleChannelSelect(channel)}
+            >
+              {channel.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      
+    </>
+  )}
+</li>
+
               <li>
                 <div
                   className="sidenav-dropdown"
@@ -394,6 +402,7 @@ function Homepage(props) {
 
 
       <div className="main-content">
+
         {message && <div className="message-box">{message}</div>}
 
         {selectedUser ? (
@@ -435,74 +444,79 @@ function Homepage(props) {
             </div>
           </>
         ) : selectedChannel ? (
-          <div className="messages-section">
-            <div className="messages-list">
-            <div className="messages-header">
-            <h2>Channel Name: {selectedChannel.name}</h2>
-            </div>
-            <button onClick={() => setShowAddUsers(true)}>
-              Add Users to Channel
-            </button>
-            {showAddUsers && (
-              <div className="add-users-section">
-                <h2>Add Users to Channel</h2>
-                <form onSubmit={handleFormSubmit}>
-                  <div className="user-list">
-                    {userList.map((user) => (
-                      <div key={user.id}>
-                        <input
-                          type="checkbox"
-                          id={`user-${user.id}`}
-                          value={user.id}
-                          onChange={(e) => {
-                            const userId = e.target.value;
-                            setUsersToAdd((prevUsers) =>
-                              e.target.checked
-                                ? [...prevUsers, userId]
-                                : prevUsers.filter((id) => id !== userId)
-                            );
-                          }}
-                        />
-                        <label htmlFor={`user-${user.id}`}>{user.email}</label>
-                      </div>
-                    ))}
-                  </div>
-                  <button type="submit">Add Users</button>
-                  <button onClick={() => setShowAddUsers(false)}>Cancel</button>
-                </form>
+          <>
+           <div className="messages-header-channel">
+      <h2>Channel Name: {selectedChannel.name}</h2>
+      <button className="primary-button" onClick={() => setShowAddUsers(true)}>
+        Add Users to Channel
+      </button>
+    </div>
+    <div className="messages-section">
+      <div className="messages-list">
+        {channelMessages.length > 0 ? (
+          channelMessages.map((msg, index) => (
+            <div
+              key={index}
+              className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
+            >
+              <div className="message-sender">
+                {msg.sender.email} {/* Assuming the sender's email is available */}
               </div>
-            )}
-            <div className="messages-list">
-              {channelMessages.length > 0 ? (
-                channelMessages.map((msg, index) => (
-                  <div 
-                  key={index} 
-                  className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
-                  >
-                     <div className="message-sender">
-                        {msg.sender.email} {/* Assuming the sender's email is available */}
-                      </div>
-                      <div className="message-body">
-                    {msg.body}
-                    </div>
-                    </div>
-                ))
-              ) : (
-                <p>No messages to display</p>
-              )}
-                 <div ref={messagesEndRef} />
+              <div className="message-body">{msg.body}</div>
             </div>
-            <div className="message-input">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message"
-              />
-              <button onClick={sendMessage}>Send</button>
+          ))
+        ) : (
+          <p>No messages to display</p>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="message-input">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type your message"
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
+    </div>
+
+    {showAddUsers && (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <h2>Add Users to Channel</h2>
+          <form className="add-users-form" onSubmit={handleFormSubmit}>
+            <div className="user-list">
+              {userList.map((user) => (
+                <div key={user.id}>
+                  <input
+                    type="checkbox"
+                    id={`user-${user.id}`}
+                    value={user.id}
+                    onChange={(e) => {
+                      const userId = e.target.value;
+                      setUsersToAdd((prevUsers) =>
+                        e.target.checked
+                          ? [...prevUsers, userId]
+                          : prevUsers.filter((id) => id !== userId)
+                      );
+                    }}
+                  />
+                  <label htmlFor={`user-${user.id}`}>{user.email}</label>
+                </div>
+              ))}
             </div>
+            <div className="buttons-modal">
+            <button type="submit">Add Users</button>
+            <button type="button" onClick={() => setShowAddUsers(false)}>
+              Cancel
+            </button>
             </div>
-          </div>
+          </form>
+        </div>
+      </div>
+    )}
+          </>
         ) : (
           <>
             {showCreateChannel && (

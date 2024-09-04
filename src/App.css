@@ -33,7 +33,7 @@ body {
 .loginGreeting {
     margin: 0;
     font-size: 40px;
-    color: #ffc107;
+    color: #496D53;
     font-family: "Poppins", sans-serif;
     font-weight: 500;
     font-style: normal;
@@ -95,10 +95,7 @@ button {
     font-family: "Poppins", sans-serif;
     font-weight: 600;
     font-style: normal;
-}
-
-button:hover {
-    background-color: #e0a800;
+    height: 3rem;
 }
 
 .success-message {
