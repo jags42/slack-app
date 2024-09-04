@@ -54,6 +54,10 @@
   margin: 5px 0;
 }
 
+.user-list {
+  font: black;
+}
+
 @media (max-width: 768px) {
   /* Your styles go here */
   .sidenav, .sidenav-container {

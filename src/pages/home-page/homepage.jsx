@@ -328,7 +328,7 @@ function Homepage(props) {
                   <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
                 </div>
                 {showChannels && (
-                  <ul className="dropdown">
+                  <ul className="dropdown-users">
                     {channels.map((channel) => (
                       <li key={channel.id}>
                         <a
@@ -339,13 +339,14 @@ function Homepage(props) {
                         </a>
                       </li>
                     ))}
-                    <li>
+                    <li><button>
                       <a onClick={() => {
                         setShowCreateChannel(true);
                         setSelectedChannel(false);
                       }}>
                         Create New Channel
                       </a>
+                      </button>
                     </li>
                   </ul>
                 )}
@@ -435,7 +436,10 @@ function Homepage(props) {
           </>
         ) : selectedChannel ? (
           <div className="messages-section">
+            <div className="messages-list">
+            <div className="messages-header">
             <h2>Channel Name: {selectedChannel.name}</h2>
+            </div>
             <button onClick={() => setShowAddUsers(true)}>
               Add Users to Channel
             </button>
@@ -471,15 +475,24 @@ function Homepage(props) {
             <div className="messages-list">
               {channelMessages.length > 0 ? (
                 channelMessages.map((msg, index) => (
-                  <div key={index} className="message-item">
+                  <div 
+                  key={index} 
+                  className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
+                  >
+                     <div className="message-sender">
+                        {msg.sender.email} {/* Assuming the sender's email is available */}
+                      </div>
+                      <div className="message-body">
                     {msg.body}
-                  </div>
+                    </div>
+                    </div>
                 ))
               ) : (
-                <p>No messages yet.</p>
+                <p>No messages to display</p>
               )}
+                 <div ref={messagesEndRef} />
             </div>
-            <div className="send-message">
+            <div className="message-input">
               <input
                 type="text"
                 value={newMessage}
@@ -487,6 +500,7 @@ function Homepage(props) {
                 placeholder="Type your message"
               />
               <button onClick={sendMessage}>Send</button>
+            </div>
             </div>
           </div>
         ) : (
