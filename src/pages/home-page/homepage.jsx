@@ -1,27 +1,29 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../../constants/constants";
 import UserService from "../../services/UserService";
-import logo from '../../assets/avionchat.png';
+import logo from "../../assets/avionchat.png";
 import "./homepage.css";
-import '@fortawesome/fontawesome-free/css/all.min.css'; // Import Font Awesome
-import axios from 'axios';
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import axios from "axios";
 
 function Homepage(props) {
   const { setIsLoggedIn, user } = props;
   const [userList, setUserList] = useState([]);
-  const [channels, setChannels] = useState([]); // Add state for channels
+  const [channels, setChannels] = useState([]);
   const [showChannels, setShowChannels] = useState(false);
   const [showDirectMessages, setShowDirectMessages] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null); // State for selected user
-  const [messages, setMessages] = useState([]); // State for messages
-  const [newMessage, setNewMessage] = useState(""); // State for new message
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
 
   // Define states for Create Channel and Add Users to Channel
   const [showCreateChannel, setShowCreateChannel] = useState(false);
-  const [channelName, setChannelName] = useState('');
+  const [channelName, setChannelName] = useState("");
   const [showAddUsers, setShowAddUsers] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [usersToAdd, setUsersToAdd] = useState([]);
+  const [message, setMessage] = useState("");
+  const [channelMessages, setChannelMessages] = useState([]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -33,8 +35,6 @@ function Homepage(props) {
     }
   }, [userList.length, user]);
 
-  
-
   useEffect(() => {
     async function fetchChannels() {
       try {
@@ -45,31 +45,57 @@ function Homepage(props) {
           uid: user.uid,
         };
         const response = await axios.get(`${API_URL}/channels`, { headers });
-        if (response.status === 200) {
+
+        if (response.status === 200 && Array.isArray(response.data.data)) {
           setChannels(response.data.data);
+        } else if (response.data.errors) {
+          console.error("Error fetching channels:", response.data.errors);
+          setChannels([]); // Set channels to an empty array
+        } else {
+          console.error("Unexpected response format:", response);
+          setChannels([]); // Set channels to an empty array if unexpected format
         }
       } catch (error) {
-        console.error('Failed to fetch channels', error);
+        console.error("Failed to fetch channels", error);
+        setChannels([]); // Optionally set an empty array in case of an error
       }
     }
     fetchChannels();
   }, [user]);
 
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    if (!selectedChannel) {
+      alert("Please select a channel.");
+      return;
+    }
+
+    handleAddUsersToChannel();
+  }
+
   useEffect(() => {
     if (selectedUser) {
-      fetchMessages(); // Initial fetch of messages for the selected user
+      fetchMessages();
 
       const intervalId = setInterval(() => {
-        fetchMessages(); // Fetch messages every 1 second
+        fetchMessages();
       }, 1000);
 
-      // Clean up the interval when the component unmounts or `selectedUser` changes
       return () => clearInterval(intervalId);
     }
   }, [selectedUser]);
 
   function handleUserSelect(user) {
     setSelectedUser(user);
+    setSelectedChannel(null);
+    setShowCreateChannel(false);
+  }
+
+  function handleChannelSelect(channel){
+    setSelectedChannel(channel);
+    setSelectedUser(null);
+    setShowCreateChannel(false);
   }
 
   async function fetchMessages() {
@@ -82,14 +108,17 @@ function Homepage(props) {
           uid: user.uid,
         };
 
-        const response = await axios.get(`${API_URL}/messages?receiver_id=${selectedUser.id}&receiver_class=User`, { headers });
+        const response = await axios.get(
+          `${API_URL}/messages?receiver_id=${selectedUser.id}&receiver_class=User`,
+          { headers }
+        );
         if (response.status === 200) {
-          setMessages(response.data.data); // Ensure you're setting the correct data
+          setMessages(response.data.data);
         } else {
-          console.error('Failed to fetch messages');
+          console.error("Failed to fetch messages");
         }
       } catch (error) {
-        console.error('Failed to fetch messages', error);
+        console.error("Failed to fetch messages", error);
       }
     }
   }
@@ -105,50 +134,57 @@ function Homepage(props) {
           uid: user.uid,
         };
 
-        const response = await axios.post(`${API_URL}/messages`, {
-          receiver_id: selectedUser.id,
-          receiver_class: "User",
-          body: newMessage // Ensure this matches your API's expected field name
-        }, { headers });
+        const response = await axios.post(
+          `${API_URL}/messages`,
+          {
+            receiver_id: selectedUser.id,
+            receiver_class: "User",
+            body: newMessage,
+          },
+          { headers }
+        );
 
         if (response.status === 200) {
-          fetchMessages(); // Optionally, refetch the messages to ensure the list is updated
-          setNewMessage(""); // Clear the input field after sending
+          fetchMessages();
+          setNewMessage("");
         }
       } catch (error) {
-        console.error('Failed to send message', error);
+        console.error("Failed to send message", error);
       }
     }
   }
 
-  function logout() {
-    localStorage.clear();
-    setIsLoggedIn(false);
-  }
-
   async function handleCreateChannel(e) {
-    e.preventDefault(); 
-  
+    e.preventDefault();
+
     try {
       const headers = {
         "Content-Type": "application/json",
-        "access-token": user.accessToken, 
+        "access-token": user.accessToken,
         expiry: user.expiry,
         client: user.client,
-        uid: user.uid
-      }; 
+        uid: user.uid,
+      };
 
-      const response = await axios.post(`${API_URL}/channels`, {
-        name: channelName
-      }, { headers }); 
+      const response = await axios.post(
+        `${API_URL}/channels`,
+        {
+          name: channelName,
+        },
+        { headers }
+      );
 
       if (response.status === 200) {
-        console.log('Channel created successfully:', response.data); 
+        console.log("Channel created successfully:", response.data);
+        setMessage("Channel created successfully!");
+        setTimeout(() => setMessage(""), 3000); //clear msg after 3secs
         setShowCreateChannel(false);
-        setChannelName(''); // Clear the input after channel creation
+        setChannelName("");
       }
     } catch (error) {
-      console.error('Failed to create channel', error); 
+      console.error("Failed to create channel", error);
+      setMessage("Failed to create channel.");
+      setTimeout(() => setMessage(""), 3000);
     }
   }
 
@@ -161,17 +197,108 @@ function Homepage(props) {
         client: user.client,
         uid: user.uid,
       };
-      const response = await axios.post(`${API_URL}/channels/${selectedChannel}/users`, { user_ids: usersToAdd }, { headers });
+      const response = await axios.post(
+        `${API_URL}/channel/add_member`,
+        {
+          user_ids: usersToAdd,
+          channel_id: selectedChannel,
+        },
+        { headers }
+      );
+
       if (response.status === 200) {
-        console.log('Users added successfully:', response.data);
+        setMessage("Users added successfully!");
         setShowAddUsers(false);
-        // Optionally refresh user lists or channel details
+        setTimeout(() => setMessage(""), 3000); //clear msg after 3secs
       }
     } catch (error) {
-      console.error('Failed to add users to channel', error);
+      console.error("Failed to add users to channel", error);
+
+      setMessage("Failed to add users. Please try again.");
+      setTimeout(() => setMessage(""), 3000);
     }
   }
 
+  useEffect(() => {
+    if (selectedChannel) {
+      fetchChannelMessages();
+  
+      const intervalId = setInterval(() => {
+        fetchChannelMessages();
+      }, 1000);
+  
+      return () => clearInterval(intervalId);
+    }
+  }, [selectedChannel]);
+  
+  async function fetchChannelMessages() {
+    if (selectedChannel) {
+      try {
+        const headers = {
+          "access-token": user.accessToken,
+          expiry: user.expiry,
+          client: user.client,
+          uid: user.uid,
+        };
+  
+        const response = await axios.get(
+          `${API_URL}/messages?receiver_id=${selectedChannel.id}&receiver_class=Channel`,
+          { headers }
+        );
+  
+        if (response.status === 200) {
+          setChannelMessages(response.data.data);
+        } else {
+          console.error("Failed to fetch channel messages");
+        }
+      } catch (error) {
+        console.error("Failed to fetch channel messages", error);
+      }
+    }
+  }
+
+  async function sendMessage() {
+    if ((selectedUser || selectedChannel) && newMessage.trim()) {
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+          "access-token": user.accessToken,
+          expiry: user.expiry,
+          client: user.client,
+          uid: user.uid,
+        };
+  
+        const payload = {
+          body: newMessage,
+        };
+  
+        if (selectedUser) {
+          payload.receiver_id = selectedUser.id;
+          payload.receiver_class = "User";
+        } else if (selectedChannel) {
+          payload.receiver_id = selectedChannel.id;
+          payload.receiver_class = "Channel";
+        }
+  
+        const response = await axios.post(
+          `${API_URL}/messages`,
+          payload,
+          { headers }
+        );
+  
+        if (response.status === 200) {
+          selectedUser ? fetchMessages() : fetchChannelMessages();
+          setNewMessage("");
+        }
+      } catch (error) {
+        console.error("Failed to send message", error);
+      }
+    }
+  }
+  function logout() {
+    localStorage.clear();
+    setIsLoggedIn(false);
+  }
 
   return (
     <div className="home-container">
@@ -182,34 +309,47 @@ function Homepage(props) {
               <img src={logo} alt="Avion Bank Logo" />
             </div>
             <ul>
-            <li>
-                <a
-                  href="#"
-                  onClick={() => setShowChannels(!showChannels)}
-                >
+              <li>
+                <a onClick={() => setShowChannels(!showChannels)}>
                   Channels{" "}
-                  <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
+                  <i
+                    className={`fas fa-caret-${showChannels ? "up" : "down"}`}
+                  ></i>
                 </a>
                 {showChannels && (
                   <ul className="dropdown">
                     {channels.map((channel) => (
                       <li key={channel.id}>
-                        <a href={`/channel/${channel.id}`}>{channel.name}</a>
+                        <a
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleChannelSelect(channel)}
+                        >
+                          {channel.name}
+                        </a>
                       </li>
                     ))}
-                    <li><a href='#' onClick={() => setShowCreateChannel(true)}>Create New Channel</a></li>
-                    {/* Optionally, add a link to manage users */}
-                    {channels.length > 0 && (
-                      <li><a href='#' onClick={() => setShowAddUsers(true)}>Add Users to Channel</a></li>
-                    )}
+                      <li>
+                        <a onClick={() => {
+                          setShowCreateChannel(true);
+                          setSelectedChannel(false);
+                        }}>
+                          Create New Channel
+                        </a>
+                      </li>
                   </ul>
                 )}
               </li>
               <li>
-                <div className="sidenav-dropdown" onClick={() => setShowDirectMessages(!showDirectMessages)}
+                <div
+                  className="sidenav-dropdown"
+                  onClick={() => setShowDirectMessages(!showDirectMessages)}
                 >
                   Direct Messages{" "}
-                  <i className={`fas fa-caret-${showDirectMessages ? "up" : "down"}`}></i>
+                  <i
+                    className={`fas fa-caret-${
+                      showDirectMessages ? "up" : "down"
+                    }`}
+                  ></i>
                 </div>
                 {showDirectMessages && (
                   <ul className="dropdown-users">
@@ -218,7 +358,7 @@ function Homepage(props) {
                         <li key={student.id}>
                           <div
                             className={`dropdown-users-results ${
-                              selectedUser?.id === student.id ? 'selected' : ''
+                              selectedUser?.id === student.id ? "selected" : ""
                             }`}
                             onClick={() => handleUserSelect(student)}
                           >
@@ -235,71 +375,122 @@ function Homepage(props) {
             </ul>
           </div>
           <div className="logout-button">
-            <button className="primary-btn logout" onClick={logout}>Logout</button>
+            <button className="primary-btn logout" onClick={logout}>
+              Logout
+            </button>
           </div>
         </div>
       </div>
 
       <div className="main-content">
-        {selectedUser && (
+        {message && <div className="message-box">{message}</div>}
+
+        {selectedUser ? (
           <div className="messages-section">
             <h2>Chat with {selectedUser.email}</h2>
             <div className="messages-list">
               {messages.length > 0 ? (
                 messages.map((msg, index) => (
                   <div key={index} className="message-item">
-                    {msg.body} {/* Ensure this matches the field name in your API response */}
+                    {msg.body}
                   </div>
                 ))
               ) : (
-                <p>No messages to display</p>
+                <p>No messages yet.</p>
               )}
             </div>
-            <div className="message-input">
+            <div className="send-message">
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message..."
+                placeholder="Type your message"
               />
               <button onClick={sendMessage}>Send</button>
             </div>
           </div>
-        )}
-
-         {/* Conditionally Render Create Channel Form */}
-         {showCreateChannel && (
-          <div className="create-channel-form">
-            <h2>Create a New Channel</h2>
-            <form onSubmit={handleCreateChannel}>
-              <input
-                type="text"
-                value={channelName}
-                onChange={(e) => setChannelName(e.target.value)}
-                placeholder="Enter channel name"
-                required
-              />
-              <button type="submit">Create Channel</button>
-              <button onClick={() => setShowCreateChannel(false)}>Cancel</button>
-            </form>
+        ) : selectedChannel ? (
+        <div className="messages-section">
+          <h2>Channel Name: {selectedChannel.name}</h2>
+          <button onClick={() => setShowAddUsers(true)}>
+                  Add Users to Channel
+                </button>
+                {showAddUsers && (
+                  <div className="add-users-section">
+                    <h2>Add Users to Channel</h2>
+                    <form onSubmit={handleFormSubmit}>
+                      <div className="user-list">
+                        {userList.map((user) => (
+                          <div key={user.id}>
+                            <input
+                              type="checkbox"
+                              id={`user-${user.id}`}
+                              value={user.id}
+                              onChange={(e) => {
+                                const userId = e.target.value;
+                                setUsersToAdd((prevUsers) =>
+                                  e.target.checked
+                                    ? [...prevUsers, userId]
+                                    : prevUsers.filter((id) => id !== userId)
+                                );
+                              }}
+                            />
+                            <label htmlFor={`user-${user.id}`}>
+                              {user.email}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      <button type="submit">Add Users</button>
+                      <button onClick={() => setShowAddUsers(false)}>
+                        Cancel
+                      </button>
+                    </form>
+                  </div>
+                )}
+          <div className="messages-list">
+            {channelMessages.length > 0 ? (
+              channelMessages.map((msg, index) => (
+                <div key={index} className="message-item">
+                  {msg.body}
+                </div>
+              ))
+            ) : (
+              <p>No messages yet.</p>
+            )} 
+             </div>
+             <div className="send-message">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message"
+            />
+            <button onClick={sendMessage}>Send</button>
           </div>
+        </div>
+      ) : (
+          <>
+            {showCreateChannel && (
+              <div className="create-channel-section">
+                <h2>Create a New Channel</h2>
+                <form onSubmit={handleCreateChannel}>
+                  <input
+                    type="text"
+                    placeholder="Channel Name"
+                    value={channelName}
+                    onChange={(e) => setChannelName(e.target.value)}
+                    required
+                  />
+                  <button type="submit">Create</button>
+                  <button onClick={() => setShowCreateChannel(false)}>
+                    Cancel
+                  </button>
+                </form>
+              </div>
+            )}
+          </>
         )}
-
-         {/* Conditionally Render Add Users to Channel Form */}
-         {showAddUsers && (
-    <div className="add-users-form">
-      <h2>Add Users to Channel</h2>
-      <form onSubmit={(e) => { e.preventDefault(); handleAddUsersToChannel(); }}>
-        <select multiple value={usersToAdd} onChange={(e) => setUsersToAdd(Array.from(e.target.selectedOptions, option => option.value))}>
-          {userList.map(user => (
-            <option key={user.id} value={user.id}>{user.email}</option>
-          ))}
-        </select>
-        <button type="submit">Add Users</button>
-        <button onClick={() => setShowAddUsers(false)}>Cancel</button>
-      </form>
-    </div>
-  )}
       </div>
     </div>
   );
