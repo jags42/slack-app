@@ -10,6 +10,7 @@
   flex-direction: column;
   gap: 40rem;
   padding: 1rem;
+  border-right: 1px solid black;
 }
 
 
@@ -75,7 +76,6 @@
 
 .sidenav-container {
   width: 284px;
-  border: 1px solid #e6e6e6;
 }
 
 .logout-button {
@@ -126,15 +126,15 @@
 .messages-section {
   display: flex;
   flex-direction: column;
-  height: calc(100% - 178px);
-  padding: 32px;
+  height: calc(100% - 100px);
 }
 
 .messages-list {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  margin-bottom: 10px; /* Space between messages and input */
+  box-shadow: inset 0px 2px 8px rgba(0, 0, 0, .1); /* Inner shadow */
+  background-color: white;
 }
 
 .message-item {
@@ -144,46 +144,43 @@
 .message-input {
   display: flex;
   padding: 10px;
-  background-color:  #151618;
-  height: 150px;
+  background-color:  #e6e6e6;
+  height: 110px;
 }
 
 .message-input input::placeholder {
-  color: #aaa; /* Placeholder color if you want it to be different */
+  color: #232323;; /* Placeholder color if you want it to be different */
 }
 
 .message-input input {
   flex: 1;
   padding: 10px;
   margin-right: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #496D53;
   border-radius: 4px;
-  background-color:  #151618;
-  color: #ccc !important;
+  background-color:  #e6e6e6;
+  color: #232323 !important;
 }
 
 .message-input button {
   padding: 10px 100px;
   border: none;
-  background-color: #ffc107;
-  color: #232323;
+  background-color: #496D53;
+  color: fff;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.message-input button:hover {
-  background-color: #0056b3;
-}
-
 .messages-header {
-  background-color: #232323;
-  height: 178px;
+  background-color: #e6e6e6;
+  height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 0 2rem;
   border: 1px solid #e6e6e6;
   border-left: unset;
+  color:#496D53;
 }
 
 .message-item {
@@ -191,8 +188,9 @@
 }
 
 .message-sender {
-  font-weight: bold;
+  font-weight: light;
   margin-bottom: 5px;
+  color:#232323;
 }
 
 .message-body {
@@ -203,9 +201,13 @@
   width: fit-content;
 }
 
+.my-message .message-sender {
+  color:#496D53;
+}
+
 .my-message .message-body {
-  background-color: #ffc107;
-  color: #333; /* Optional: Ensure text is readable on a red background */
+  background-color: #496D53;
+  color: #fff; /* Optional: Ensure text is readable on a red background */
 }
 
 .message-item {
