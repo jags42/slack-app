@@ -319,45 +319,45 @@ function Homepage(props) {
               <img src={logo} alt="Avion Bank Logo" />
             </div>
             <ul>
-            <li>
-  <div
-    className="sidenav-dropdown"
-    onClick={() => setShowChannels(!showChannels)}
-  >
-    Channels{" "}
-    <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
-  </div>
+              <li>
+                <div
+                  className="sidenav-dropdown"
+                  onClick={() => setShowChannels(!showChannels)}
+                >
+                  Channels{" "}
+                  <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
+                </div>
 
-  {showChannels && (
-    <>
-    <div className="create-channel-button">
-        <button className="channel-button"
-          onClick={() => {
-            setShowCreateChannel(true);
-            setSelectedChannel(false);
-          }}
-        >
-          Create New Channel
-        </button>
-      </div>
+                {showChannels && (
+                  <>
+                    <div className="create-channel-button">
+                      <button className="channel-button"
+                        onClick={() => {
+                          setShowCreateChannel(true);
+                          setSelectedChannel(false);
+                        }}
+                      >
+                        Create New Channel
+                      </button>
+                    </div>
 
-      <ul className="dropdown-channels">
-        {channels.map((channel) => (
-          <li key={channel.id}>
-            <a
-              style={{ cursor: "pointer" }}
-              onClick={() => handleChannelSelect(channel)}
-            >
-              {channel.name}
-            </a>
-          </li>
-        ))}
-      </ul>
+                    <ul className="dropdown-channels">
+                      {channels.map((channel) => (
+                        <li key={channel.id}>
+                          <a
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleChannelSelect(channel)}
+                          >
+                            {channel.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
 
-      
-    </>
-  )}
-</li>
+
+                  </>
+                )}
+              </li>
 
               <li>
                 <div
@@ -445,96 +445,101 @@ function Homepage(props) {
           </>
         ) : selectedChannel ? (
           <>
-           <div className="messages-header-channel">
-      <h2>Channel Name: {selectedChannel.name}</h2>
-      <button className="primary-button" onClick={() => setShowAddUsers(true)}>
-        Add Users to Channel
-      </button>
-    </div>
-    <div className="messages-section">
-      <div className="messages-list">
-        {channelMessages.length > 0 ? (
-          channelMessages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
-            >
-              <div className="message-sender">
-                {msg.sender.email} {/* Assuming the sender's email is available */}
+            <div className="messages-header-channel">
+              <h2>Channel Name: {selectedChannel.name}</h2>
+              <button className="primary-button" onClick={() => setShowAddUsers(true)}>
+                Add Users to Channel
+              </button>
+            </div>
+            <div className="messages-section">
+              <div className="messages-list">
+                {channelMessages.length > 0 ? (
+                  channelMessages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
+                    >
+                      <div className="message-sender">
+                        {msg.sender.email} {/* Assuming the sender's email is available */}
+                      </div>
+                      <div className="message-body">{msg.body}</div>
+                    </div>
+                  ))
+                ) : (
+                  <p>No messages to display</p>
+                )}
+                <div ref={messagesEndRef} />
               </div>
-              <div className="message-body">{msg.body}</div>
+              <div className="message-input">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message"
+                />
+                <button onClick={sendMessage}>Send</button>
+              </div>
             </div>
-          ))
-        ) : (
-          <p>No messages to display</p>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="message-input">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type your message"
-        />
-        <button onClick={sendMessage}>Send</button>
-      </div>
-    </div>
 
-    {showAddUsers && (
-      <div className="modal-overlay">
-        <div className="modal-content">
-          <h2>Add Users to Channel</h2>
-          <form className="add-users-form" onSubmit={handleFormSubmit}>
-            <div className="user-list">
-              {userList.map((user) => (
-                <div key={user.id}>
-                  <input
-                    type="checkbox"
-                    id={`user-${user.id}`}
-                    value={user.id}
-                    onChange={(e) => {
-                      const userId = e.target.value;
-                      setUsersToAdd((prevUsers) =>
-                        e.target.checked
-                          ? [...prevUsers, userId]
-                          : prevUsers.filter((id) => id !== userId)
-                      );
-                    }}
-                  />
-                  <label htmlFor={`user-${user.id}`}>{user.email}</label>
+            {showAddUsers && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2>Add Users to Channel</h2>
+                  <form className="add-users-form" onSubmit={handleFormSubmit}>
+                    <div className="user-list">
+                      {userList.map((user) => (
+                        <div key={user.id}>
+                          <input
+                            type="checkbox"
+                            id={`user-${user.id}`}
+                            value={user.id}
+                            onChange={(e) => {
+                              const userId = e.target.value;
+                              setUsersToAdd((prevUsers) =>
+                                e.target.checked
+                                  ? [...prevUsers, userId]
+                                  : prevUsers.filter((id) => id !== userId)
+                              );
+                            }}
+                          />
+                          <label htmlFor={`user-${user.id}`}>{user.email}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="buttons-modal">
+                      <button type="submit">Add Users</button>
+                      <button type="button" onClick={() => setShowAddUsers(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              ))}
-            </div>
-            <div className="buttons-modal">
-            <button type="submit">Add Users</button>
-            <button type="button" onClick={() => setShowAddUsers(false)}>
-              Cancel
-            </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )}
+              </div>
+            )}
           </>
         ) : (
           <>
             {showCreateChannel && (
-              <div className="create-channel-section">
-                <h2>Create a New Channel</h2>
-                <form onSubmit={handleCreateChannel}>
-                  <input
-                    type="text"
-                    placeholder="Channel Name"
-                    value={channelName}
-                    onChange={(e) => setChannelName(e.target.value)}
-                    required
-                  />
-                  <button type="submit">Create</button>
-                  <button onClick={() => setShowCreateChannel(false)}>Cancel</button>
-                </form>
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2>Create a New Channel</h2>
+                  <form onSubmit={handleCreateChannel}>
+                    <input
+                      type="text"
+                      placeholder="Channel Name"
+                      value={channelName}
+                      onChange={(e) => setChannelName(e.target.value)}
+                      required
+                    />
+                    <div className="buttons-modal">
+                      <button type="submit">Create</button>
+                      <button type="button" onClick={() => setShowCreateChannel(false)}>Cancel</button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
+
           </>
         )}
       </div>
