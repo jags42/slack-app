@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { API_URL } from "../../constants/constants";
 import UserService from "../../services/UserService";
 import logo from "../../assets/avionchat.png";
@@ -24,6 +24,17 @@ function Homepage(props) {
   const [usersToAdd, setUsersToAdd] = useState([]);
   const [message, setMessage] = useState("");
   const [channelMessages, setChannelMessages] = useState([]);
+
+  const messagesEndRef = useRef(null); // Ref to the end of the messages list
+
+  // Scroll to the bottom of the messages list
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom(); // Scroll to bottom when messages array changes
+  }, [messages]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -92,12 +103,13 @@ function Homepage(props) {
     setShowCreateChannel(false);
   }
 
-  function handleChannelSelect(channel){
+  function handleChannelSelect(channel) {
     setSelectedChannel(channel);
     setSelectedUser(null);
     setShowCreateChannel(false);
   }
 
+  //FETCH MESSAGE
   async function fetchMessages() {
     if (selectedUser) {
       try {
@@ -123,6 +135,7 @@ function Homepage(props) {
     }
   }
 
+  //SEND MESSAGE
   async function sendMessage() {
     if (selectedUser && newMessage.trim()) {
       try {
@@ -134,15 +147,11 @@ function Homepage(props) {
           uid: user.uid,
         };
 
-        const response = await axios.post(
-          `${API_URL}/messages`,
-          {
-            receiver_id: selectedUser.id,
-            receiver_class: "User",
-            body: newMessage,
-          },
-          { headers }
-        );
+        const response = await axios.post(`${API_URL}/messages`, {
+          receiver_id: selectedUser.id,
+          receiver_class: "User",
+          body: newMessage
+        }, { headers });
 
         if (response.status === 200) {
           fetchMessages();
@@ -188,6 +197,7 @@ function Homepage(props) {
     }
   }
 
+  //ADD USERS TO CHANNEL
   async function handleAddUsersToChannel() {
     try {
       const headers = {
@@ -222,15 +232,15 @@ function Homepage(props) {
   useEffect(() => {
     if (selectedChannel) {
       fetchChannelMessages();
-  
+
       const intervalId = setInterval(() => {
         fetchChannelMessages();
       }, 1000);
-  
+
       return () => clearInterval(intervalId);
     }
   }, [selectedChannel]);
-  
+
   async function fetchChannelMessages() {
     if (selectedChannel) {
       try {
@@ -240,12 +250,12 @@ function Homepage(props) {
           client: user.client,
           uid: user.uid,
         };
-  
+
         const response = await axios.get(
           `${API_URL}/messages?receiver_id=${selectedChannel.id}&receiver_class=Channel`,
           { headers }
         );
-  
+
         if (response.status === 200) {
           setChannelMessages(response.data.data);
         } else {
@@ -267,11 +277,11 @@ function Homepage(props) {
           client: user.client,
           uid: user.uid,
         };
-  
+
         const payload = {
           body: newMessage,
         };
-  
+
         if (selectedUser) {
           payload.receiver_id = selectedUser.id;
           payload.receiver_class = "User";
@@ -279,13 +289,13 @@ function Homepage(props) {
           payload.receiver_id = selectedChannel.id;
           payload.receiver_class = "Channel";
         }
-  
+
         const response = await axios.post(
           `${API_URL}/messages`,
           payload,
           { headers }
         );
-  
+
         if (response.status === 200) {
           selectedUser ? fetchMessages() : fetchChannelMessages();
           setNewMessage("");
@@ -310,12 +320,13 @@ function Homepage(props) {
             </div>
             <ul>
               <li>
-                <a onClick={() => setShowChannels(!showChannels)}>
+                <div
+                  className="sidenav-dropdown"
+                  onClick={() => setShowChannels(!showChannels)}
+                >
                   Channels{" "}
-                  <i
-                    className={`fas fa-caret-${showChannels ? "up" : "down"}`}
-                  ></i>
-                </a>
+                  <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
+                </div>
                 {showChannels && (
                   <ul className="dropdown">
                     {channels.map((channel) => (
@@ -328,14 +339,14 @@ function Homepage(props) {
                         </a>
                       </li>
                     ))}
-                      <li>
-                        <a onClick={() => {
-                          setShowCreateChannel(true);
-                          setSelectedChannel(false);
-                        }}>
-                          Create New Channel
-                        </a>
-                      </li>
+                    <li>
+                      <a onClick={() => {
+                        setShowCreateChannel(true);
+                        setSelectedChannel(false);
+                      }}>
+                        Create New Channel
+                      </a>
+                    </li>
                   </ul>
                 )}
               </li>
@@ -346,9 +357,8 @@ function Homepage(props) {
                 >
                   Direct Messages{" "}
                   <i
-                    className={`fas fa-caret-${
-                      showDirectMessages ? "up" : "down"
-                    }`}
+                    className={`fas fa-caret-${showDirectMessages ? "up" : "down"
+                      }`}
                   ></i>
                 </div>
                 {showDirectMessages && (
@@ -357,9 +367,8 @@ function Homepage(props) {
                       userList.map((student) => (
                         <li key={student.id}>
                           <div
-                            className={`dropdown-users-results ${
-                              selectedUser?.id === student.id ? "selected" : ""
-                            }`}
+                            className={`dropdown-users-results ${selectedUser?.id === student.id ? "selected" : ""
+                              }`}
                             onClick={() => handleUserSelect(student)}
                           >
                             {student.email}
@@ -382,15 +391,86 @@ function Homepage(props) {
         </div>
       </div>
 
+
       <div className="main-content">
         {message && <div className="message-box">{message}</div>}
 
         {selectedUser ? (
+          <>
+            <div className="messages-header">
+              <h2>Chat with {selectedUser.email}</h2>
+            </div>
+            <div className="messages-section">
+              <div className="messages-list">
+                {messages.length > 0 ? (
+                  messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
+                    >
+                      <div className="message-sender">
+                        {msg.sender.email} {/* Assuming the sender's email is available */}
+                      </div>
+                      <div className="message-body">
+                        {msg.body}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p>No messages to display</p>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <div className="message-input">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message..."
+                />
+                <button onClick={sendMessage}>Send Message</button>
+              </div>
+            </div>
+          </>
+        ) : selectedChannel ? (
           <div className="messages-section">
-            <h2>Chat with {selectedUser.email}</h2>
+            <h2>Channel Name: {selectedChannel.name}</h2>
+            <button onClick={() => setShowAddUsers(true)}>
+              Add Users to Channel
+            </button>
+            {showAddUsers && (
+              <div className="add-users-section">
+                <h2>Add Users to Channel</h2>
+                <form onSubmit={handleFormSubmit}>
+                  <div className="user-list">
+                    {userList.map((user) => (
+                      <div key={user.id}>
+                        <input
+                          type="checkbox"
+                          id={`user-${user.id}`}
+                          value={user.id}
+                          onChange={(e) => {
+                            const userId = e.target.value;
+                            setUsersToAdd((prevUsers) =>
+                              e.target.checked
+                                ? [...prevUsers, userId]
+                                : prevUsers.filter((id) => id !== userId)
+                            );
+                          }}
+                        />
+                        <label htmlFor={`user-${user.id}`}>{user.email}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="submit">Add Users</button>
+                  <button onClick={() => setShowAddUsers(false)}>Cancel</button>
+                </form>
+              </div>
+            )}
             <div className="messages-list">
-              {messages.length > 0 ? (
-                messages.map((msg, index) => (
+              {channelMessages.length > 0 ? (
+                channelMessages.map((msg, index) => (
                   <div key={index} className="message-item">
                     {msg.body}
                   </div>
@@ -409,67 +489,7 @@ function Homepage(props) {
               <button onClick={sendMessage}>Send</button>
             </div>
           </div>
-        ) : selectedChannel ? (
-        <div className="messages-section">
-          <h2>Channel Name: {selectedChannel.name}</h2>
-          <button onClick={() => setShowAddUsers(true)}>
-                  Add Users to Channel
-                </button>
-                {showAddUsers && (
-                  <div className="add-users-section">
-                    <h2>Add Users to Channel</h2>
-                    <form onSubmit={handleFormSubmit}>
-                      <div className="user-list">
-                        {userList.map((user) => (
-                          <div key={user.id}>
-                            <input
-                              type="checkbox"
-                              id={`user-${user.id}`}
-                              value={user.id}
-                              onChange={(e) => {
-                                const userId = e.target.value;
-                                setUsersToAdd((prevUsers) =>
-                                  e.target.checked
-                                    ? [...prevUsers, userId]
-                                    : prevUsers.filter((id) => id !== userId)
-                                );
-                              }}
-                            />
-                            <label htmlFor={`user-${user.id}`}>
-                              {user.email}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      <button type="submit">Add Users</button>
-                      <button onClick={() => setShowAddUsers(false)}>
-                        Cancel
-                      </button>
-                    </form>
-                  </div>
-                )}
-          <div className="messages-list">
-            {channelMessages.length > 0 ? (
-              channelMessages.map((msg, index) => (
-                <div key={index} className="message-item">
-                  {msg.body}
-                </div>
-              ))
-            ) : (
-              <p>No messages yet.</p>
-            )} 
-             </div>
-             <div className="send-message">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message"
-            />
-            <button onClick={sendMessage}>Send</button>
-          </div>
-        </div>
-      ) : (
+        ) : (
           <>
             {showCreateChannel && (
               <div className="create-channel-section">
@@ -483,9 +503,7 @@ function Homepage(props) {
                     required
                   />
                   <button type="submit">Create</button>
-                  <button onClick={() => setShowCreateChannel(false)}>
-                    Cancel
-                  </button>
+                  <button onClick={() => setShowCreateChannel(false)}>Cancel</button>
                 </form>
               </div>
             )}

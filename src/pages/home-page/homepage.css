@@ -4,18 +4,19 @@
   position: fixed;
   top: 0;
   left: 0;
-  background-color: #232323;
+  background-color: #e6e6e6;
   padding-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 40rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding: 1rem;
 }
 
 
 .sidenav-logo {
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .sidenav-account {
@@ -28,12 +29,15 @@
   padding: 8px 0;
   text-decoration: none;
   font-size: 16px;
-  color: white;
+  color: #333;
   font-weight: 600;
-  width: 100%;
   display: flex;
   justify-content: space-between;
   cursor: pointer;
+}
+
+.dropdown-users li {
+  color: #496D53;
 }
 
 .sidenav ul {
@@ -42,7 +46,7 @@
 }
 
 .sidenav ul li {
-  margin: 10px 0;
+  margin-bottom: 5px;
 }
 
 .sidenav ul .dropdown li {
@@ -62,7 +66,6 @@
 
 .main-content {
   width: calc(100% - 284px);
-  padding: 32px;
 }
 
 .home-container {
@@ -72,11 +75,12 @@
 
 .sidenav-container {
   width: 284px;
+  border: 1px solid #e6e6e6;
 }
 
 .logout-button {
   position: absolute;
-  bottom: 20px; /* Adjust this value as needed */
+  bottom: 50px; /* Adjust this value as needed */
   width: 89%;
   text-align: center; /* Center the button horizontally */
 }
@@ -96,9 +100,110 @@
 }
 
 .dropdown-users-results.selected {
-  background-color: red; /* Change this to whatever color you want */
+  background-color: #496D53; /* Change this to whatever color you want */
   color: white; /* Optional: change text color for contrast */
+  padding: 0.5rem;
+  border-radius: 5px;
+  font-weight: 700;
+  width: fit-content;
 }
 /*********************************** CODE ONLY BELOW THIS PART *******************************************/
 
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.messages-section {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 178px);
+  padding: 32px;
+}
+
+.messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  margin-bottom: 10px; /* Space between messages and input */
+}
+
+.message-item {
+  margin-bottom: 10px;
+}
+
+.message-input {
+  display: flex;
+  padding: 10px;
+  background-color:  #151618;
+  height: 150px;
+}
+
+.message-input input::placeholder {
+  color: #aaa; /* Placeholder color if you want it to be different */
+}
+
+.message-input input {
+  flex: 1;
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color:  #151618;
+  color: #ccc !important;
+}
+
+.message-input button {
+  padding: 10px 100px;
+  border: none;
+  background-color: #ffc107;
+  color: #232323;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.message-input button:hover {
+  background-color: #0056b3;
+}
+
+.messages-header {
+  background-color: #232323;
+  height: 178px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 2rem;
+  border: 1px solid #e6e6e6;
+  border-left: unset;
+}
+
+.message-item {
+  margin-bottom: 15px;
+}
+
+.message-sender {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.message-body {
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-radius: 4px;
+  color: #333;
+  width: fit-content;
+}
+
+.my-message .message-body {
+  background-color: #ffc107;
+  color: #333; /* Optional: Ensure text is readable on a red background */
+}
+
+.message-item {
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
 
