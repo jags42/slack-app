@@ -29,14 +29,21 @@ function Homepage(props) {
 
   const messagesEndRef = useRef(null); // Ref to the end of the messages list
 
+  // New state for the welcome message
+  const [welcomeMessage, setWelcomeMessage] = useState("");
+
   // Scroll to the bottom of the messages list
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom(); // Scroll to bottom when messages array changes
-  }, [messages]);
+  useEffect(
+    () => {
+      scrollToBottom(); // Scroll to bottom when messages array changes
+    },
+    [messages],
+    [channelMessages]
+  );
 
   useEffect(() => {
     async function fetchUsers() {
@@ -47,6 +54,11 @@ function Homepage(props) {
       fetchUsers();
     }
   }, [userList.length, user]);
+
+  useEffect(() => {
+    // Set welcome message on initial login
+    setWelcomeMessage(`Welcome ${user.uid}! Start chatting.`);
+  }, [user]);
 
   useEffect(() => {
     async function fetchChannels() {
@@ -87,31 +99,36 @@ function Homepage(props) {
             client: user.client,
             uid: user.uid,
           };
-  
-          const response = await axios.get(`${API_URL}/channels/${selectedChannel.id}`, { headers });
-  
+
+          const response = await axios.get(
+            `${API_URL}/channels/${selectedChannel.id}`,
+            { headers }
+          );
+
           // Extract the channel_members array from the response data
           const members = response.data.data?.channel_members || [];
-  
+
           // Map members to their corresponding user details from userList
-          const membersWithDetails = members.map(member => {
-            const userDetails = userList.find(user => user.id === member.user_id);
+          const membersWithDetails = members.map((member) => {
+            const userDetails = userList.find(
+              (user) => user.id === member.user_id
+            );
             return {
               ...member,
-              email: userDetails?.email || 'Unknown',  // Add email or 'Unknown' if not found
+              email: userDetails?.email || "Unknown", // Add email or 'Unknown' if not found
             };
           });
-  
+
           setChannelMembers(membersWithDetails);
         } catch (error) {
-          console.error('Error fetching channel members:', error);
-          setChannelMembers([]);  // Reset members list on error
+          console.error("Error fetching channel members:", error);
+          setChannelMembers([]); // Reset members list on error
         }
       } else {
-        setChannelMembers([]);  // Clear members if no channel is selected
+        setChannelMembers([]); // Clear members if no channel is selected
       }
     };
-  
+
     fetchChannelMembers();
   }, [selectedChannel, user, userList]);
 
@@ -121,7 +138,7 @@ function Homepage(props) {
       setMessage("No channel selected.");
       return;
     }
-  
+
     try {
       const headers = {
         "Content-Type": "application/json",
@@ -130,22 +147,22 @@ function Homepage(props) {
         client: user.client,
         uid: user.uid,
       };
-  
+
       const response = await axios.post(
         `${API_URL}/channel/remove_member`, //*******MAKE SURE THIS API ENDPOINT EXISTS */
         {
-          id: selectedChannel.id,  // Channel ID
-          member_id: user.id,       // User ID to remove (current user)
+          id: selectedChannel.id, // Channel ID
+          member_id: user.id, // User ID to remove (current user)
         },
         { headers }
       );
-  
+
       if (response.status === 200) {
         setMessage("You have left the channel.");
-        setSelectedChannel(null);  // Clear the selected channel
+        setSelectedChannel(null); // Clear the selected channel
         setTimeout(() => setMessage(""), 3000); // Clear message after 3 seconds
       } else {
-        console.error('Failed to leave the channel:', response.data);
+        console.error("Failed to leave the channel:", response.data);
         setMessage("Failed to leave the channel.");
       }
     } catch (error) {
@@ -153,9 +170,6 @@ function Homepage(props) {
       setMessage("Failed to leave the channel. Please try again.");
     }
   }
-  
-  
-
 
   async function handleFormSubmit(e) {
     e.preventDefault();
@@ -230,11 +244,15 @@ function Homepage(props) {
           uid: user.uid,
         };
 
-        const response = await axios.post(`${API_URL}/messages`, {
-          receiver_id: selectedUser.id,
-          receiver_class: "User",
-          body: newMessage
-        }, { headers });
+        const response = await axios.post(
+          `${API_URL}/messages`,
+          {
+            receiver_id: selectedUser.id,
+            receiver_class: "User",
+            body: newMessage,
+          },
+          { headers }
+        );
 
         if (response.status === 200) {
           fetchMessages();
@@ -275,8 +293,8 @@ function Homepage(props) {
       }
     } catch (error) {
       console.error("Failed to create channel", error);
-      setMessage("Failed to create channel.");
-      setTimeout(() => setMessage(""), 3000);
+      // setMessage("Failed to create channel.");
+      // setTimeout(() => setMessage(""), 3000);
     }
   }
 
@@ -314,9 +332,8 @@ function Homepage(props) {
 
   //NO STACKING OF SAME IDs
   function handleUserSelection(userId) {
-  setUsersToAdd([userId]);
-}
-
+    setUsersToAdd([userId]);
+  }
 
   useEffect(() => {
     if (selectedChannel) {
@@ -379,11 +396,9 @@ function Homepage(props) {
           payload.receiver_class = "Channel";
         }
 
-        const response = await axios.post(
-          `${API_URL}/messages`,
-          payload,
-          { headers }
-        );
+        const response = await axios.post(`${API_URL}/messages`, payload, {
+          headers,
+        });
 
         if (response.status === 200) {
           selectedUser ? fetchMessages() : fetchChannelMessages();
@@ -414,13 +429,16 @@ function Homepage(props) {
                   onClick={() => setShowChannels(!showChannels)}
                 >
                   Channels{" "}
-                  <i className={`fas fa-caret-${showChannels ? "up" : "down"}`}></i>
+                  <i
+                    className={`fas fa-caret-${showChannels ? "up" : "down"}`}
+                  ></i>
                 </div>
 
                 {showChannels && (
                   <>
                     <div className="create-channel-button">
-                      <button className="channel-button"
+                      <button
+                        className="channel-button"
                         onClick={() => {
                           setShowCreateChannel(true);
                           setSelectedChannel(false);
@@ -442,8 +460,6 @@ function Homepage(props) {
                         </li>
                       ))}
                     </ul>
-
-
                   </>
                 )}
               </li>
@@ -455,8 +471,9 @@ function Homepage(props) {
                 >
                   Direct Messages{" "}
                   <i
-                    className={`fas fa-caret-${showDirectMessages ? "up" : "down"
-                      }`}
+                    className={`fas fa-caret-${
+                      showDirectMessages ? "up" : "down"
+                    }`}
                   ></i>
                 </div>
                 {showDirectMessages && (
@@ -465,8 +482,9 @@ function Homepage(props) {
                       userList.map((student) => (
                         <li key={student.id}>
                           <div
-                            className={`dropdown-users-results ${selectedUser?.id === student.id ? "selected" : ""
-                              }`}
+                            className={`dropdown-users-results ${
+                              selectedUser?.id === student.id ? "selected" : ""
+                            }`}
                             onClick={() => handleUserSelect(student)}
                           >
                             {student.email}
@@ -489,9 +507,7 @@ function Homepage(props) {
         </div>
       </div>
 
-
       <div className="main-content">
-
         {message && <div className="message-box">{message}</div>}
 
         {selectedUser ? (
@@ -505,14 +521,15 @@ function Homepage(props) {
                   messages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
+                      className={`message-item ${
+                        msg.sender.id === user.id ? "my-message" : ""
+                      }`}
                     >
                       <div className="message-sender">
-                        {msg.sender.email} {/* Assuming the sender's email is available */}
+                        {msg.sender.email}{" "}
+                        {/* Assuming the sender's email is available */}
                       </div>
-                      <div className="message-body">
-                        {msg.body}
-                      </div>
+                      <div className="message-body">{msg.body}</div>
                     </div>
                   ))
                 ) : (
@@ -536,13 +553,22 @@ function Homepage(props) {
           <>
             <div className="messages-header-channel">
               <h2>Channel Name: {selectedChannel.name}</h2>
-              <button className="primary-button" onClick={() => setShowAddUsers(true)}>
+              <button
+                className="primary-button"
+                onClick={() => setShowAddUsers(true)}
+              >
                 Add Users to Channel
               </button>
-              <button className="primary-button" onClick={() => setShowAddChannelMembers(true)}>
+              <button
+                className="primary-button"
+                onClick={() => setShowAddChannelMembers(true)}
+              >
                 Channel Members
               </button>
-              <button className="primary-button-red" onClick={handleLeaveChannel}>
+              <button
+                className="primary-button-red"
+                onClick={handleLeaveChannel}
+              >
                 Leave Channel
               </button>
             </div>
@@ -552,10 +578,13 @@ function Homepage(props) {
                   channelMessages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`message-item ${msg.sender.id === user.id ? 'my-message' : ''}`}
+                      className={`message-item ${
+                        msg.sender.id === user.id ? "my-message" : ""
+                      }`}
                     >
                       <div className="message-sender">
-                        {msg.sender.email} {/* Assuming the sender's email is available */}
+                        {msg.sender.email}{" "}
+                        {/* Assuming the sender's email is available */}
                       </div>
                       <div className="message-body">{msg.body}</div>
                     </div>
@@ -575,90 +604,95 @@ function Homepage(props) {
                 <button onClick={sendMessage}>Send</button>
               </div>
             </div>
-
-            {showAddUsers && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2>Add Users to Channel</h2>
-                  <form className="add-users-form" onSubmit={handleFormSubmit}>
-                    <div className="user-list">
-                      {userList.map((user) => (
-                        <div key={user.id}>
-                          <input
-                            type="checkbox"
-                            id={`user-${user.id}`}
-                            value={user.id}
-                            onChange={(e) => {
-                              const userId = e.target.value;
-                               handleUserSelection(userId); 
-                              
-                            }}
-                          />
-                          <label htmlFor={`user-${user.id}`}>{user.email}</label>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="buttons-modal">
-                      <button type="submit">Add Users</button>
-                      <button type="button" onClick={() => setShowAddUsers(false)}>
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-{showAddChannelMembers && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h2>Channel Members</h2>
-      <div className="member-list">
-        {channelMembers.length > 0 ? (
-          channelMembers.map((member) => (
-            <div key={member.id}>
-              <span>{member.email}</span>
-              {/* Add more member details here, e.g., email */}
-            </div>
-          ))
+          </>
         ) : (
-          <p>No members found in this channel.</p>
+          // Show the welcome message when no user or channel is selected
+          <div className="welcome-message">
+            <h2 className="welcome-greeting">{welcomeMessage}</h2>
+          </div>
         )}
-      </div>
-      <div className="buttons-modal">
-        <button type="button" onClick={() => setShowAddChannelMembers(false)}>
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-          </>
-        ) : (
-          <>
-            {showCreateChannel && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2>Create a New Channel</h2>
-                  <form onSubmit={handleCreateChannel}>
-                    <input
-                      type="text"
-                      placeholder="Channel Name"
-                      value={channelName}
-                      onChange={(e) => setChannelName(e.target.value)}
-                      required
-                    />
-                    <div className="buttons-modal">
-                      <button type="submit">Create</button>
-                      <button type="button" onClick={() => setShowCreateChannel(false)}>Cancel</button>
+        {showAddUsers && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>Add Users to Channel</h2>
+              <form className="add-users-form" onSubmit={handleFormSubmit}>
+                <div className="user-list">
+                  {userList.map((user) => (
+                    <div key={user.id}>
+                      <input
+                        type="checkbox"
+                        id={`user-${user.id}`}
+                        value={user.id}
+                        onChange={(e) => {
+                          const userId = e.target.value;
+                          handleUserSelection(userId);
+                        }}
+                      />
+                      <label htmlFor={`user-${user.id}`}>{user.email}</label>
                     </div>
-                  </form>
+                  ))}
                 </div>
+                <div className="buttons-modal">
+                  <button type="submit">Add Users</button>
+                  <button type="button" onClick={() => setShowAddUsers(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {showAddChannelMembers && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>Channel Members</h2>
+              <div className="member-list">
+                {channelMembers.length > 0 ? (
+                  channelMembers.map((member) => (
+                    <div key={member.id}>
+                      <span>{member.email}</span>
+                      {/* Add more member details here, e.g., email */}
+                    </div>
+                  ))
+                ) : (
+                  <p>No members found in this channel.</p>
+                )}
               </div>
-            )}
-
-          </>
+              <div className="buttons-modal">
+                <button
+                  type="button"
+                  onClick={() => setShowAddChannelMembers(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showCreateChannel && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>Create a New Channel</h2>
+              <form onSubmit={handleCreateChannel}>
+                <input
+                  type="text"
+                  placeholder="Channel Name"
+                  value={channelName}
+                  onChange={(e) => setChannelName(e.target.value)}
+                  required
+                />
+                <div className="buttons-modal">
+                  <button type="submit">Create</button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateChannel(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </div>

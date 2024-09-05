@@ -6,8 +6,8 @@ import logo from '../src/assets/avionchat.png';
 import axios from "axios"; 
 
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+function App() { //Initialize states
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(() => 
@@ -18,22 +18,22 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(()=>{
-    if(user){
-      setIsLoggedIn(true);
-      localStorage.setItem("user", JSON.stringify(user));
+    if(user){ //checks if user is stored in localStorage 
+      setIsLoggedIn(true); //updates the isLoggedIn state
+      localStorage.setItem("user", JSON.stringify(user)); //saves the user data to localStorage
     }
   }, [user]);
 
   async function handleSubmit(event){
-    event.preventDefault(); 
-    if (!email || !password){
+    event.preventDefault(); //prevents the form from reloading the page
+    if (!email || !password){  //checks if both fields are not empty 
       return alert("Invalid Credentials");
     }
     try {
       const loginCredentials = {
         email, password
       };
-      const response = await axios.post(`${API_URL}/auth/sign_in`, loginCredentials);
+      const response = await axios.post(`${API_URL}/auth/sign_in`, loginCredentials); //sends a POST request to the server with the login credentials.
       const {data, headers} = response; 
 
       if (data && headers) {
@@ -47,38 +47,38 @@ function App() {
           expiry,
           client,
           uid,
-          id: data.data.id 
+          id: data.data.id //If the server responds with user data and headers, it updates the user state with this data and sets isLoggedIn to true.
         });
 
         setIsLoggedIn(true);
       }
     } catch (error) {
       if(error.response.data.errors){
-        return alert("Invalid Credentials"); 
+        return alert("Invalid Credentials"); //if the login fails, it shows an alert
       }
     }
   }
 
   async function handleRegister(event){
-    event.preventDefault();
-    if (!email || !password){
-      return alert("Please fill in all fields");
+    event.preventDefault(); //stops the page from reloading
+    if (!email || !password){ //makes sure both the email and password fields are filled out
+      return alert("Please fill in all fields"); //if either is missing, it shows an alert saying "Please fill in all fields.""
     }
     try {
       const registerCredentials = {
         email, password
       };
-      const response = await axios.post(`${API_URL}/auth`, registerCredentials);
+      const response = await axios.post(`${API_URL}/auth`, registerCredentials); //sends a POST request to the server to create a new account
       
-      if (response.status === 200) {
-        setSuccessMessage("Successfully created account. Please sign in.");
+      if (response.status === 200) { //if registration is successful, it updates the successMessage, clears the email and password fields, and switches back to the login form
+        setSuccessMessage("Successfully created account. Please sign in."); 
         setEmail('');
         setPassword('');
         setIsRegistering(false);
       }
     } catch (error) {
       if(error.response.data.errors){
-        return alert("Failed to create account. Try again.");
+        return alert("Failed to create account. Try again."); //If registration fails, it shows an alert.
       }
     }
   }
@@ -120,6 +120,7 @@ function App() {
         </div>
       ) : (
         <Homepage setIsLoggedIn={setIsLoggedIn} user={user} />
+        // <div>Welcome!</div>
       )}
     </div>
   );
