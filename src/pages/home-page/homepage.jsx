@@ -267,7 +267,8 @@ function Homepage(props) {
   async function handleCreateChannel(e) {
     e.preventDefault();
 
-    try { // sets up headers for the API request, including a token for authentication.
+    try {
+      // sets up headers for the API request, including a token for authentication.
       const headers = {
         "Content-Type": "application/json",
         "access-token": user.accessToken,
@@ -300,6 +301,11 @@ function Homepage(props) {
 
   //ADD USERS TO CHANNEL
   async function handleAddUsersToChannel() {
+    if (usersToAdd.length === 0) {
+      setMessage("No users selected.");
+      return;
+    }
+
     try {
       const headers = {
         "Content-Type": "application/json",
@@ -308,25 +314,34 @@ function Homepage(props) {
         client: user.client,
         uid: user.uid,
       };
-  
-      const response = await axios.post(
-        `${API_URL}/channel/add_member?id=${selectedChannel.id}&member_id=${usersToAdd[0]}`,
-        null,  // No body required since params are in the URL
-        { headers }
+
+      // Loop through usersToAdd array and make API calls for each user
+      const addUserPromises = usersToAdd.map((userId) =>
+        axios.post(
+          `${API_URL}/channel/add_member?id=${selectedChannel.id}&member_id=${userId}`,
+          null, // No body required since params are in the URL
+          { headers }
+        )
       );
-  
-      if (response.status === 200) {
+
+      // Wait for all API calls to finish
+      const responses = await Promise.all(addUserPromises);
+
+      // Check if all users were added successfully
+      if (responses.every((response) => response.status === 200)) {
         setMessage("Users added successfully!");
         setShowAddUsers(false);
         setTimeout(() => setMessage(""), 3000); // Clear msg after 3 seconds
-  
-        // Find the user in userList to add to channelMembers
-        const addedUser = userList.find(user => user.id === parseInt(usersToAdd[0]));
-  
-        if (addedUser) {
-          setChannelMembers(prevMembers => [...prevMembers, addedUser]);
-        }
-  
+
+        // Find the users in userList and add them to channelMembers
+        const addedUsers = usersToAdd
+          .map((userId) =>
+            userList.find((user) => user.id === parseInt(userId))
+          )
+          .filter((user) => user !== undefined); // Filter out any undefined users
+
+        setChannelMembers((prevMembers) => [...prevMembers, ...addedUsers]);
+
         // Clear the usersToAdd state
         setUsersToAdd([]);
       }
@@ -632,7 +647,12 @@ function Homepage(props) {
                         value={user.id}
                         onChange={(e) => {
                           const userId = e.target.value;
-                          handleUserSelection(userId);
+                          setUsersToAdd(
+                            (prevUsers) =>
+                              e.target.checked
+                                ? [...prevUsers, userId] // Add user ID if checked
+                                : prevUsers.filter((id) => id !== userId) // Remove user ID if unchecked
+                          );
                         }}
                       />
                       <label htmlFor={`user-${user.id}`}>{user.email}</label>
