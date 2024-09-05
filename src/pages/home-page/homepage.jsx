@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { API_URL } from "../../constants/constants";
 import UserService from "../../services/UserService";
 import logo from "../../assets/avionchat.png";
+import welcomeImage from "../../assets/cuate.svg";
 import "./homepage.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import axios from "axios";
@@ -566,6 +567,11 @@ function Homepage(props) {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      sendMessage();
+                    }
+                  }}
                 />
                 <button onClick={sendMessage}>Send Message</button>
               </div>
@@ -575,6 +581,7 @@ function Homepage(props) {
           <>
             <div className="messages-header-channel">
               <h2>Channel Name: {selectedChannel.name}</h2>
+              <div className="header-buttons">
               <button
                 className="primary-button"
                 onClick={() => setShowAddUsers(true)}
@@ -591,8 +598,9 @@ function Homepage(props) {
                 className="primary-button-red"
                 onClick={handleLeaveChannel}
               >
-                Leave Channel
+                Leave
               </button>
+              </div>
             </div>
             <div className="messages-section">
               <div className="messages-list">
@@ -631,6 +639,7 @@ function Homepage(props) {
           // Show the welcome message when no user or channel is selected
           <div className="welcome-message">
             <h2 className="welcome-greeting">{welcomeMessage}</h2>
+            <img className="welcome-image" src={welcomeImage} alt="Welcome illustration" />
           </div>
         )}
         {showAddUsers && (
