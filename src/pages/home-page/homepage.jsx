@@ -267,7 +267,7 @@ function Homepage(props) {
   async function handleCreateChannel(e) {
     e.preventDefault();
 
-    try {
+    try { // sets up headers for the API request, including a token for authentication.
       const headers = {
         "Content-Type": "application/json",
         "access-token": user.accessToken,
@@ -277,7 +277,7 @@ function Homepage(props) {
       };
 
       const response = await axios.post(
-        `${API_URL}/channels`,
+        `${API_URL}/channels`, //sends a POST request to API to create a new channel with the name provided in the form.
         {
           name: channelName,
         },
@@ -308,23 +308,30 @@ function Homepage(props) {
         client: user.client,
         uid: user.uid,
       };
+  
       const response = await axios.post(
         `${API_URL}/channel/add_member?id=${selectedChannel.id}&member_id=${usersToAdd[0]}`,
-        {
-          user_ids: usersToAdd,
-          channel_id: selectedChannel,
-        },
+        null,  // No body required since params are in the URL
         { headers }
       );
-
+  
       if (response.status === 200) {
         setMessage("Users added successfully!");
         setShowAddUsers(false);
-        setTimeout(() => setMessage(""), 3000); //clear msg after 3secs
+        setTimeout(() => setMessage(""), 3000); // Clear msg after 3 seconds
+  
+        // Find the user in userList to add to channelMembers
+        const addedUser = userList.find(user => user.id === parseInt(usersToAdd[0]));
+  
+        if (addedUser) {
+          setChannelMembers(prevMembers => [...prevMembers, addedUser]);
+        }
+  
+        // Clear the usersToAdd state
+        setUsersToAdd([]);
       }
     } catch (error) {
       console.error("Failed to add users to channel", error);
-
       setMessage("Failed to add users. Please try again.");
       setTimeout(() => setMessage(""), 3000);
     }
