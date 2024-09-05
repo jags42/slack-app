@@ -20,6 +20,8 @@ function Homepage(props) {
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [channelName, setChannelName] = useState("");
   const [showAddUsers, setShowAddUsers] = useState(false);
+  const [showAddChannelMembers, setShowAddChannelMembers] = useState(false);
+  const [channelMembers, setChannelMembers] = useState([]);
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [usersToAdd, setUsersToAdd] = useState([]);
   const [message, setMessage] = useState("");
@@ -73,6 +75,87 @@ function Homepage(props) {
     }
     fetchChannels();
   }, [user]);
+
+  //DISPLAY CHANNEL MEMBERS
+  useEffect(() => {
+    const fetchChannelMembers = async () => {
+      if (selectedChannel) {
+        try {
+          const headers = {
+            "access-token": user.accessToken,
+            expiry: user.expiry,
+            client: user.client,
+            uid: user.uid,
+          };
+  
+          const response = await axios.get(`${API_URL}/channels/${selectedChannel.id}`, { headers });
+  
+          // Extract the channel_members array from the response data
+          const members = response.data.data?.channel_members || [];
+  
+          // Map members to their corresponding user details from userList
+          const membersWithDetails = members.map(member => {
+            const userDetails = userList.find(user => user.id === member.user_id);
+            return {
+              ...member,
+              email: userDetails?.email || 'Unknown',  // Add email or 'Unknown' if not found
+            };
+          });
+  
+          setChannelMembers(membersWithDetails);
+        } catch (error) {
+          console.error('Error fetching channel members:', error);
+          setChannelMembers([]);  // Reset members list on error
+        }
+      } else {
+        setChannelMembers([]);  // Clear members if no channel is selected
+      }
+    };
+  
+    fetchChannelMembers();
+  }, [selectedChannel, user, userList]);
+
+  //LEAVE CHANNEL FUNCTION
+  async function handleLeaveChannel() {
+    if (!selectedChannel) {
+      setMessage("No channel selected.");
+      return;
+    }
+  
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "access-token": user.accessToken,
+        expiry: user.expiry,
+        client: user.client,
+        uid: user.uid,
+      };
+  
+      const response = await axios.post(
+        `${API_URL}/channel/remove_member`, //*******MAKE SURE THIS API ENDPOINT EXISTS */
+        {
+          id: selectedChannel.id,  // Channel ID
+          member_id: user.id,       // User ID to remove (current user)
+        },
+        { headers }
+      );
+  
+      if (response.status === 200) {
+        setMessage("You have left the channel.");
+        setSelectedChannel(null);  // Clear the selected channel
+        setTimeout(() => setMessage(""), 3000); // Clear message after 3 seconds
+      } else {
+        console.error('Failed to leave the channel:', response.data);
+        setMessage("Failed to leave the channel.");
+      }
+    } catch (error) {
+      console.error("Error leaving the channel:", error);
+      setMessage("Failed to leave the channel. Please try again.");
+    }
+  }
+  
+  
+
 
   async function handleFormSubmit(e) {
     e.preventDefault();
@@ -208,7 +291,7 @@ function Homepage(props) {
         uid: user.uid,
       };
       const response = await axios.post(
-        `${API_URL}/channel/add_member`,
+        `${API_URL}/channel/add_member?id=${selectedChannel.id}&member_id=${usersToAdd[0]}`,
         {
           user_ids: usersToAdd,
           channel_id: selectedChannel,
@@ -228,6 +311,12 @@ function Homepage(props) {
       setTimeout(() => setMessage(""), 3000);
     }
   }
+
+  //NO STACKING OF SAME IDs
+  function handleUserSelection(userId) {
+  setUsersToAdd([userId]);
+}
+
 
   useEffect(() => {
     if (selectedChannel) {
@@ -450,6 +539,12 @@ function Homepage(props) {
               <button className="primary-button" onClick={() => setShowAddUsers(true)}>
                 Add Users to Channel
               </button>
+              <button className="primary-button" onClick={() => setShowAddChannelMembers(true)}>
+                Channel Members
+              </button>
+              <button className="primary-button-red" onClick={handleLeaveChannel}>
+                Leave Channel
+              </button>
             </div>
             <div className="messages-section">
               <div className="messages-list">
@@ -495,11 +590,8 @@ function Homepage(props) {
                             value={user.id}
                             onChange={(e) => {
                               const userId = e.target.value;
-                              setUsersToAdd((prevUsers) =>
-                                e.target.checked
-                                  ? [...prevUsers, userId]
-                                  : prevUsers.filter((id) => id !== userId)
-                              );
+                               handleUserSelection(userId); 
+                              
                             }}
                           />
                           <label htmlFor={`user-${user.id}`}>{user.email}</label>
@@ -516,6 +608,32 @@ function Homepage(props) {
                 </div>
               </div>
             )}
+
+{showAddChannelMembers && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <h2>Channel Members</h2>
+      <div className="member-list">
+        {channelMembers.length > 0 ? (
+          channelMembers.map((member) => (
+            <div key={member.id}>
+              <span>{member.email}</span>
+              {/* Add more member details here, e.g., email */}
+            </div>
+          ))
+        ) : (
+          <p>No members found in this channel.</p>
+        )}
+      </div>
+      <div className="buttons-modal">
+        <button type="button" onClick={() => setShowAddChannelMembers(false)}>
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
           </>
         ) : (
           <>
